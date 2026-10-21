@@ -4,13 +4,13 @@ plugins {
 
 android {
     namespace 'com.zalexdev.stryker'
-    compileSdk 37
+    compileSdk 36
     ndkVersion '25.1.8937393'
 
     defaultConfig {
         applicationId "com.zalexdev.stryker"
         minSdk 24
-        targetSdk 37
+        targetSdk 36
         versionCode 651
         versionName "6.5.1"
 
