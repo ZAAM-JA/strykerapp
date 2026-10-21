@@ -251,8 +251,7 @@ final class UmlUsb implements GuestUsb {
                     serverBin.getAbsolutePath(),
                     "--usbsock", sockName,
                     "--listen", "127.0.0.1:" + port,
-                    "--no-cmdline",
-                    "--verbose");
+                    "--no-cmdline");
             pb.directory(engine.base());
             pb.redirectErrorStream(true);
             proc = pb.start();
@@ -415,13 +414,58 @@ final class UmlUsb implements GuestUsb {
 
     private void drain(final Process proc, final BufferedReader reader, final String label) {
         Thread t = new Thread(() -> {
+            long lastReport = System.currentTimeMillis();
+            long protocolErrors = 0;
+            long otherErrors = 0;
+            String lastError = "";
             try {
                 String line;
-                while ((line = reader.readLine()) != null) StrykerLog.i(TAG, line);
-            } catch (IOException ignored) {
+                while ((line = reader.readLine()) != null) {
+                    // The USB bridge can emit thousands of identical transfer failures
+                    // per second. Always consume stdout to avoid blocking the process,
+                    // but summarize noisy per-URB errors instead of logging each one.
+                    if (line.contains("completed: status -71")) {
+                        protocolErrors++;
+                    } else if (line.contains("completed: status -")) {
+                        otherErrors++;
+                        lastError = line;
+                    } else if (line.contains("umusb: submit seq ")
+                            || line.contains("umusb: seq ")) {
+                        // Per-URB traces are not useful in ordinary operation.
+                    } else {
+                        StrykerLog.i(TAG, line);
+                    }
+                    long now = System.currentTimeMillis();
+                    if (now - lastReport >= 5_000L) {
+                        if (protocolErrors > 0 || otherErrors > 0) {
+                            StrykerLog.w(TAG, "USB/IP " + label + " in last "
+                                    + (now - lastReport) + "ms: protocol(-71)="
+                                    + protocolErrors + ", otherFailures=" + otherErrors
+                                    + (lastError.isEmpty() ? "" : ", last=" + lastError));
+                        }
+                        protocolErrors = 0;
+                        otherErrors = 0;
+                        lastError = "";
+                        lastReport = now;
+                    }
+                }
+            } catch (IOException e) {
+                StrykerLog.w(TAG, "USB/IP log stream for " + label + " failed: " + e);
             } finally {
+                if (protocolErrors > 0 || otherErrors > 0) {
+                    StrykerLog.w(TAG, "USB/IP " + label + " final transfer errors:"
+                            + " protocol(-71)=" + protocolErrors
+                            + ", otherFailures=" + otherErrors);
+                }
                 try { reader.close(); } catch (IOException ignored) {}
-                StrykerLog.i(TAG, "the USB/IP server for " + label + " ended");
+                String exitStatus;
+                try {
+                    exitStatus = String.valueOf(proc.exitValue());
+                } catch (IllegalThreadStateException stillRunning) {
+                    exitStatus = "still running";
+                }
+                StrykerLog.w(TAG, "USB/IP server for " + label
+                        + " ended; process exit status=" + exitStatus);
             }
         }, "umusb-log");
         t.setDaemon(true);
