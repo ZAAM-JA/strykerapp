@@ -31,7 +31,7 @@ jobs:
           SDKMANAGER="${ANDROID_SDK_ROOT:-$ANDROID_HOME}/cmdline-tools/latest/bin/sdkmanager"
           # The pipeline exit status must come from sdkmanager rather than 'yes'.
           set +o pipefail
-          yes | "$SDKMANAGER" "platforms;android-37" "build-tools;35.0.0" "ndk;25.1.8937393" "cmake;3.22.1"
+          yes | "$SDKMANAGER" "platforms;android-36" "build-tools;35.0.0" "ndk;25.1.8937393" "cmake;3.22.1"
           set -o pipefail
 
       - name: Make Gradle executable
