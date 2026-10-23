@@ -45,8 +45,8 @@ android {
 
         debug {
             // Keep the Niche transport test separate from an installed Stryker.
-            applicationIdSuffix ".nichetest"
-            versionNameSuffix "-niche-usbip"
+            applicationIdSuffix ".nichecpu"
+            versionNameSuffix "-niche-1cpu"
             minifyEnabled false
             shrinkResources false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
