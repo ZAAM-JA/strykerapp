@@ -694,7 +694,9 @@ public final class UmlEngine implements GuestEngine {
         cmd.add("con0=fd:0,fd:1");
         cmd.add("stub_exe=" + stub().getAbsolutePath());
         cmd.add("seccomp=" + (seccomp ? "auto" : "off"));
-        if (cpus > 0) cmd.add("ncpus=" + cpus);
+        // Niche diagnostic only: force one UML CPU to isolate SMP-related USB/IP stalls.
+        // Do not merge into the stable branch without evaluating the forwarding test.
+        cmd.add("ncpus=1");
         cmd.add("ubd0=" + rootfs().getAbsolutePath());
         cmd.add("root=/dev/ubda");
         cmd.add("rw");
