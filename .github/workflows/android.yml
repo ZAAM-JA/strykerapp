@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - niche-usbip-stability
+      - niche-uml-singlecpu-diagnostic
   workflow_dispatch:
 
 permissions:
@@ -43,7 +44,7 @@ jobs:
       - name: Upload debug APK
         uses: actions/upload-artifact@v4
         with:
-          name: niche-usbip-debug-${{ github.run_number }}
+          name: niche-singlecpu-debug-${{ github.run_number }}
           path: app/build/outputs/apk/debug/*.apk
           if-no-files-found: error
           retention-days: 14
